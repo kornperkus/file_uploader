@@ -1,0 +1,16 @@
+{
+    "filesUploaded": "{uploaded}/{total} files uploaded",
+    "@filesUploaded": {
+        "placeholders": {
+            "uploaded": {
+                "type": "int"
+            },
+            "total": {
+                "type": "int"
+            }
+        }
+    },
+    "uploadFailed": "Upload failed",
+    "someFileFailToUpload": "Some file fail to upload",
+    "retry": "Retry"
+}

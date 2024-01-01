@@ -1,0 +1,6 @@
+{
+    "filesUploaded": "{uploaded}/{total} อัปโหลดเสร็จสิ้น",
+    "uploadFailed": "อัปโหลดไม่สำเร็จ",
+    "someFileFailToUpload": "บางไฟล์อัปโหลดไม่สำเร็จ",
+    "retry": "ลองใหม่"
+}

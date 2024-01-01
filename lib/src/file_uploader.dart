@@ -1,0 +1,247 @@
+import 'dart:developer' as developer;
+import 'dart:io';
+import 'dart:math';
+
+import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
+import 'package:file_uploader/file_uploader.dart';
+import 'package:path/path.dart' as path;
+import 'package:state_notifier/state_notifier.dart';
+import 'package:uuid/uuid.dart';
+
+typedef FileUploadProgress = void Function({
+  required String id,
+  required int progress,
+  String? resultUrl,
+  Object? resultError,
+});
+
+typedef UploadFileTask = Future<String?> Function(
+  FileUploadInfo fileUploadInfo,
+  FileUploadProgress uploadProgress,
+);
+
+typedef DeleteFileTask = Future Function(
+  String id,
+);
+
+class FileUploadController extends StateNotifier<FileUploadState> {
+  final UploadFileTask _uploadFileTask;
+  final DeleteFileTask _deleteFileTask;
+  final void Function()? _onUploadEnd;
+
+  FileUploadController({
+    required UploadFileTask uploadFileTask,
+    required DeleteFileTask deleteFileTask,
+    void Function()? onUploadEnd,
+  })  : _uploadFileTask = uploadFileTask,
+        _deleteFileTask = deleteFileTask,
+        _onUploadEnd = onUploadEnd,
+        super(const FileUploadState());
+
+  final _uuid = const Uuid();
+  final _progressSnackBar = UploadProgressSnackBar();
+
+  void upload({
+    required BuildContext context,
+    required List<File> files,
+  }) async {
+    if (!state.isUploaded) {
+      developer.log('Cannot start upload while uploader inprogress');
+      return;
+    }
+
+    final fileUploadInfos = files.map((file) => FileUploadInfo(
+          id: _uuid.v4(),
+          name: path.basename(file.path),
+          file: file,
+        ));
+    final newFiles = [...state.files, ...fileUploadInfos];
+
+    state = FileUploadState(
+      files: newFiles,
+      uploading:
+          newFiles.where((e) => e.progress == 0 && e.url == null).toList(),
+    );
+
+    _handleUploadStart(context);
+  }
+
+  void retryUpload({
+    required BuildContext context,
+    required List<FileUploadInfo> files,
+  }) {
+    if (!state.isUploaded) {
+      developer.log('Cannot start retry while uploader inprogress');
+      return;
+    }
+
+    final fileIds = files.map((e) => e.id).toList();
+
+    // Reset progress
+    final newFiles = state.files.map(
+      (file) {
+        if (fileIds.contains(file.id)) {
+          return FileUploadInfo(
+            id: file.id,
+            name: file.name,
+            file: file.file,
+          );
+        }
+        return file;
+      },
+    ).toList();
+
+    state = FileUploadState(
+      files: newFiles,
+      uploading: newFiles.where((e) => fileIds.contains(e.id)).toList(),
+    );
+
+    _handleUploadStart(context);
+  }
+
+  Future<void> delete(String id) async {
+    state = FileUploadState(
+      files: state.files.where((e) => e.id != id).toList(),
+      uploading: state.uploading.where((e) => e.id != id).toList(),
+    );
+
+    try {
+      await _deleteFileTask.call(id);
+    } catch (e) {
+      developer.log(e.toString());
+    }
+  }
+
+  void addUploadedFiles({
+    required List<String> fileUrls,
+  }) {
+    const uuid = Uuid();
+    final uploadedFiles = fileUrls.map(
+      (url) => FileUploadInfo(
+        id: uuid.v4(),
+        url: url,
+        progress: 100,
+      ),
+    );
+
+    state = FileUploadState(
+      files: [...state.files, ...uploadedFiles],
+      uploading: state.uploading,
+    );
+  }
+
+  void _handleUploadStart(BuildContext context) {
+    if (state.uploading.isEmpty) return;
+
+    for (int i = 0; i < state.uploading.length; i++) {
+      _doUpload(
+        uploadFileInfo: state.uploading[i],
+        uploadProgress: _handleUploadProgress,
+      );
+    }
+
+    _progressSnackBar.showSnackBar(context: context, controller: this);
+  }
+
+  void _handleUploadProgress({
+    required String id,
+    required int progress,
+    String? resultUrl,
+    Object? resultError,
+  }) {
+    final index = state.uploading.indexWhere((e) => e.id == id);
+
+    if (index != -1) {
+      FileUploadInfo item = state.uploading[index];
+      item = item.copyWith(
+        progress: progress,
+        url: resultUrl,
+        error: resultError,
+      );
+
+      state = FileUploadState(
+        files: state.files.map((e) => e.id == id ? item : e).toList(),
+        uploading: state.uploading.map((e) => e.id == id ? item : e).toList(),
+      );
+    }
+
+    if (state.isUploaded) {
+      _handleUploadEnd();
+    }
+  }
+
+  void _handleUploadEnd() {
+    _onUploadEnd?.call();
+  }
+
+  void closeSnackBar() {
+    _progressSnackBar.hideSnackBar();
+  }
+
+  List<FileUploadInfo> getErrorFiles() {
+    return state.files.where((e) => e.error != null).toList();
+  }
+
+  Future<void> _doUpload({
+    required FileUploadInfo uploadFileInfo,
+    required FileUploadProgress uploadProgress,
+  }) async {
+    if (uploadFileInfo.isUploaded) return;
+
+    try {
+      final result = await _uploadFileTask.call(
+        uploadFileInfo,
+        uploadProgress,
+      );
+      // if (result != null) {
+      // Send finish progress
+      //!TODO: remove mock
+      if (Random().nextBool()) {
+        uploadProgress(
+          id: uploadFileInfo.id,
+          progress: 100,
+          resultUrl: result,
+        );
+      } else {
+        uploadProgress(
+          id: uploadFileInfo.id,
+          progress: 100,
+          resultError: Exception(),
+        );
+      }
+      // }
+    } catch (e) {
+      uploadProgress(
+        id: uploadFileInfo.id,
+        progress: 0,
+        resultError: e,
+      );
+    }
+  }
+}
+
+class FileUploadState extends Equatable {
+  final List<FileUploadInfo> files;
+  final List<FileUploadInfo> uploading;
+
+  bool get isUploaded => uploading.every((e) => e.isUploaded);
+
+  bool get hasError => files.any((e) => e.error != null);
+
+  int get uploadingCount => uploading.length;
+
+  int get uploadedCount =>
+      uploading.where((e) => e.isUploaded && e.error == null).length;
+
+  const FileUploadState({
+    this.files = const [],
+    this.uploading = const [],
+  });
+
+  @override
+  List<Object> get props => [
+        files,
+        uploading,
+      ];
+}
