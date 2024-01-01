@@ -1,5 +1,5 @@
 name: file_uploader
-description: A new Flutter package project.
+description: File Uploader with Upload Progress.
 version: 0.1.0
 repository: https://github.com/kornperkus/file_uploader
 
