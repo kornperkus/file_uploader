@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:file_uploader/l10n/flutter_gen/localizations.dart';
 import 'package:file_uploader/l10n/flutter_gen/localizations_en.dart';
-import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 
 import '../file_upload_info.dart';
 import '../file_uploader.dart';
@@ -59,8 +58,8 @@ class _SnackBarContentState extends State<_SnackBarContent> {
     final localizations =
         FileUploaderLocalizations.of(context) ?? FileUploaderLocalizationsEn();
 
-    return StateNotifierBuilder<FileUploadState>(
-      stateNotifier: widget.controller,
+    return ValueListenableBuilder<FileUploadState>(
+      valueListenable: widget.controller,
       builder: (context, state, _) {
         return Padding(
           padding: const EdgeInsets.all(12),

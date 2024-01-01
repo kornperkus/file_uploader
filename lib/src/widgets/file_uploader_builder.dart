@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 
 import '../file_uploader.dart';
 
 class FileUploaderBuilder extends StatefulWidget {
   final FileUploadController controller;
   final Widget Function(BuildContext, FileUploadState, Widget?) builder;
+  final Widget? child;
 
   const FileUploaderBuilder({
     Key? key,
     required this.controller,
     required this.builder,
+    this.child,
   }) : super(key: key);
 
   @override
@@ -20,9 +21,10 @@ class FileUploaderBuilder extends StatefulWidget {
 class _FileUploaderBuilderState extends State<FileUploaderBuilder> {
   @override
   Widget build(BuildContext context) {
-    return StateNotifierBuilder<FileUploadState>(
-      stateNotifier: widget.controller,
+    return ValueListenableBuilder<FileUploadState>(
+      valueListenable: widget.controller,
       builder: widget.builder,
+      child: widget.child,
     );
   }
 }
