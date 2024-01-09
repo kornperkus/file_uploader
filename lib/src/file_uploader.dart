@@ -10,8 +10,8 @@ import 'package:uuid/uuid.dart';
 typedef FileUploadProgress = void Function({
   required String id,
   required int progress,
-  String? resultUrl,
-  Object? resultError,
+  String? result,
+  Object? error,
 });
 
 typedef UploadFileTask = Future<String?> Function(
@@ -112,15 +112,10 @@ class FileUploadController extends ValueNotifier<FileUploadState> {
   }
 
   void addUploadedFiles({
-    required List<String> fileUrls,
+    required List<FileUploadInfo> files,
   }) {
-    const uuid = Uuid();
-    final uploadedFiles = fileUrls.map(
-      (url) => FileUploadInfo(
-        id: uuid.v4(),
-        url: url,
-        progress: 100,
-      ),
+    final uploadedFiles = files.map(
+      (file) => file.copyWith(progress: 100),
     );
 
     value = FileUploadState(
@@ -145,17 +140,17 @@ class FileUploadController extends ValueNotifier<FileUploadState> {
   void _handleUploadProgress({
     required String id,
     required int progress,
-    String? resultUrl,
-    Object? resultError,
+    String? result,
+    Object? error,
   }) {
     final index = value.uploading.indexWhere((e) => e.id == id);
 
     if (index != -1) {
       FileUploadInfo item = value.uploading[index];
       item = item.copyWith(
+        id: result ?? id,
         progress: progress,
-        url: resultUrl,
-        error: resultError,
+        error: error,
       );
 
       value = FileUploadState(
@@ -197,13 +192,13 @@ class FileUploadController extends ValueNotifier<FileUploadState> {
       uploadProgress(
         id: uploadFileInfo.id,
         progress: 100,
-        resultUrl: result,
+        result: result,
       );
     } catch (e) {
       uploadProgress(
         id: uploadFileInfo.id,
         progress: 0,
-        resultError: e,
+        error: e,
       );
     }
   }

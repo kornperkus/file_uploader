@@ -8,6 +8,7 @@ import 'package:file_uploader/l10n/flutter_gen/localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
+import 'package:uuid/uuid.dart';
 
 void main() {
   runApp(const MyApp());
@@ -46,6 +47,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   late final FileUploadController fileUploadController;
 
+  final Uuid _uuid = const Uuid();
+
   @override
   void initState() {
     super.initState();
@@ -63,7 +66,7 @@ class _MyHomePageState extends State<MyHomePage> {
           uploadProgress(id: uploadFile.id, progress: progress);
         }
 
-        return null;
+        return _uuid.v4();
       },
       deleteFileTask: (file) async {
         await Future.delayed(const Duration(seconds: 1));
@@ -125,8 +128,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _addUploadedFiles() async {
     fileUploadController.addUploadedFiles(
-      fileUrls: [
-        'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Image_created_with_a_mobile_phone.png/1600px-Image_created_with_a_mobile_phone.png'
+      files: [
+        FileUploadInfo(
+            id: _uuid.v4(),
+            url:
+                'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Image_created_with_a_mobile_phone.png/1600px-Image_created_with_a_mobile_phone.png'),
       ],
     );
   }
