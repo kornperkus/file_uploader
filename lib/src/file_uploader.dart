@@ -194,13 +194,11 @@ class FileUploadController extends ValueNotifier<FileUploadState> {
       );
 
       // Send finish progress
-      if (result != null) {
-        uploadProgress(
-          id: uploadFileInfo.id,
-          progress: 100,
-          resultUrl: result,
-        );
-      }
+      uploadProgress(
+        id: uploadFileInfo.id,
+        progress: 100,
+        resultUrl: result,
+      );
     } catch (e) {
       uploadProgress(
         id: uploadFileInfo.id,
@@ -208,6 +206,12 @@ class FileUploadController extends ValueNotifier<FileUploadState> {
         resultError: e,
       );
     }
+  }
+
+  @override
+  void dispose() {
+    _progressSnackBar.hideSnackBar();
+    super.dispose();
   }
 }
 
