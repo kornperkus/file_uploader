@@ -1,6 +1,5 @@
 import 'dart:developer' as developer;
 import 'dart:io';
-import 'dart:math';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
@@ -193,23 +192,15 @@ class FileUploadController extends ValueNotifier<FileUploadState> {
         uploadFileInfo,
         uploadProgress,
       );
-      // if (result != null) {
+
       // Send finish progress
-      //!TODO: remove mock
-      if (Random().nextBool()) {
+      if (result != null) {
         uploadProgress(
           id: uploadFileInfo.id,
           progress: 100,
           resultUrl: result,
         );
-      } else {
-        uploadProgress(
-          id: uploadFileInfo.id,
-          progress: 100,
-          resultError: Exception(),
-        );
       }
-      // }
     } catch (e) {
       uploadProgress(
         id: uploadFileInfo.id,
