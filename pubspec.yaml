@@ -1,6 +1,6 @@
 name: file_uploader
 description: File Uploader with Upload Progress.
-version: 0.3.0
+version: 0.4.0
 repository: https://github.com/kornperkus/file_uploader
 
 environment:

@@ -1,3 +1,6 @@
+## 0.4.0
+* remove mock
+
 ## 0.3.0
 * fix uuid version solving
 
