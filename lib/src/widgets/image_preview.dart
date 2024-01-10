@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:file_uploader/l10n/flutter_gen/localizations.dart';
 import 'package:file_uploader/l10n/flutter_gen/localizations_en.dart';
 
-import '../file_upload_info.dart';
+import '../model/file_upload_info.dart';
+import '../model/file_upload_status.dart';
 
 class UploadImageThumbnail extends StatelessWidget {
   final File? file;

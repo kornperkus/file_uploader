@@ -1,4 +1,4 @@
-part of 'file_upload_info.dart';
+import 'package:equatable/equatable.dart';
 
 abstract class FileUploadStatus extends Equatable {
   const FileUploadStatus();

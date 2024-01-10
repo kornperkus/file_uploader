@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:file_uploader/l10n/flutter_gen/localizations.dart';
 import 'package:file_uploader/l10n/flutter_gen/localizations_en.dart';
 
-import '../file_upload_info.dart';
-import '../file_uploader.dart';
+import '../controller/file_uploader_controller.dart';
+import '../model/file_upload_info.dart';
+import '../model/file_upload_status.dart';
 
 class UploadProgressSnackBar {
   ScaffoldFeatureController? _snackBarController;
@@ -85,8 +86,8 @@ class _SnackBarContentState extends State<_SnackBarContent> {
                   Expanded(
                     child: Text(
                       localizations.filesUploaded(
-                        state.uploadSuccessCount,
-                        state.files.length,
+                        state.uploadingSuccessCount,
+                        state.uploadingTotalCount,
                       ),
                       style: const TextStyle(color: Colors.black),
                     ),
@@ -139,7 +140,7 @@ class _SnackBarContentState extends State<_SnackBarContent> {
                       GestureDetector(
                         onTap: () => widget.controller.retryUpload(
                           context: context,
-                          files: widget.controller.getErrorFiles(),
+                          files: state.errorImages,
                         ),
                         child: Text(
                           localizations.retry,
@@ -161,9 +162,9 @@ class _SnackBarContentState extends State<_SnackBarContent> {
                     SizedBox(
                       height: 200,
                       child: ListView.builder(
-                        itemCount: state.files.length,
+                        itemCount: state.uploadingImages.length,
                         itemBuilder: (context, index) => _ListItem(
-                          fileUploadInfo: state.files[index],
+                          fileUploadInfo: state.uploadingImages[index],
                           options: widget.options,
                         ),
                       ),

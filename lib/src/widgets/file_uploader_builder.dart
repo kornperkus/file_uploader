@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../file_uploader.dart';
+import '../controller/file_uploader_controller.dart';
 
 class FileUploaderBuilder extends StatefulWidget {
   final FileUploadController controller;
