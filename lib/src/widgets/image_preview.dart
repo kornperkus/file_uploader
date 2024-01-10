@@ -185,11 +185,14 @@ class _ImageItemUploadFailed extends StatelessWidget {
             alignment: Alignment.topRight,
             child: GestureDetector(
               onTap: onImagesDeleted,
-              child: const Padding(
-                padding: EdgeInsets.all(4.0),
-                child: Icon(
-                  Icons.cancel,
-                  color: Colors.black,
+              child: Container(
+                margin: const EdgeInsets.all(4.0),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.close,
                   size: 20,
                 ),
               ),
@@ -233,11 +236,14 @@ class _ImageItemUploadSuccess extends StatelessWidget {
               alignment: Alignment.topRight,
               child: GestureDetector(
                 onTap: onImagesDeleted,
-                child: const Padding(
-                  padding: EdgeInsets.all(4.0),
-                  child: Icon(
-                    Icons.cancel,
-                    color: Colors.black,
+                child: Container(
+                  margin: const EdgeInsets.all(4.0),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.close,
                     size: 20,
                   ),
                 ),
