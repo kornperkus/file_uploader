@@ -3,9 +3,11 @@ import 'dart:io';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
-import 'package:file_uploader/file_uploader.dart';
 import 'package:path/path.dart' as path;
 import 'package:uuid/uuid.dart';
+
+import 'file_upload_info.dart';
+import 'widgets/progress_snack_bar.dart';
 
 typedef FileUploadProgress = void Function({
   required String id,
