@@ -57,16 +57,20 @@ class _MyHomePageState extends State<MyHomePage> {
       //   uploadSuccessIcon: Icon(Icons.done, color: Colors.green),
       // ),
       uploadFileTask: (uploadFile, uploadProgress) async {
-        int progress = 0;
+        double progress = 0;
         final rand = Random();
 
-        while (progress < 100) {
+        while (progress < 1) {
           await Future.delayed(Duration(milliseconds: rand.nextInt(1000)));
-          progress = progress + 10;
-          uploadProgress(id: uploadFile.id, progress: progress);
+          progress = progress + 0.1;
+          uploadProgress(uploadFile.id, progress);
         }
 
-        return _uuid.v4();
+        if (Random().nextBool()) {
+          return FileUploadSuccess(remoteId: _uuid.v4(), url: null);
+        } else {
+          return FileUploadFailure(exception: Exception());
+        }
       },
       deleteFileTask: (file) async {
         await Future.delayed(const Duration(seconds: 1));
@@ -104,7 +108,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   fileUploadInfo: state.files[index],
                   onRetryUploadPressed: () => fileUploadController
                       .retryUpload(context: context, files: [item]),
-                  onDeletedPressed: () => fileUploadController.delete(item.id),
+                  onDeletedPressed: () => fileUploadController.delete(item),
                 ),
               );
             },
@@ -129,10 +133,11 @@ class _MyHomePageState extends State<MyHomePage> {
   void _addUploadedFiles() async {
     fileUploadController.addUploadedFiles(
       files: [
-        FileUploadInfo(
-            id: _uuid.v4(),
-            url:
-                'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Image_created_with_a_mobile_phone.png/1600px-Image_created_with_a_mobile_phone.png'),
+        {
+          'id': _uuid.v4(),
+          'url':
+              'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Image_created_with_a_mobile_phone.png/1600px-Image_created_with_a_mobile_phone.png'
+        },
       ],
     );
   }

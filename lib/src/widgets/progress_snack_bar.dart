@@ -67,26 +67,26 @@ class _SnackBarContentState extends State<_SnackBarContent> {
             children: [
               Row(
                 children: [
-                  if (state.isUploaded)
-                    const Icon(
-                      Icons.done,
-                      color: Colors.blue,
-                      size: 30,
-                    )
-                  else
+                  if (state.isUploadInProgress)
                     SizedBox(
                       height: 30,
                       width: 30,
                       child: CircularProgressIndicator(
                         color: Theme.of(context).primaryColor,
                       ),
+                    )
+                  else
+                    const Icon(
+                      Icons.done,
+                      color: Colors.blue,
+                      size: 30,
                     ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Text(
                       localizations.filesUploaded(
-                        state.uploadedCount,
-                        state.uploadingCount,
+                        state.uploadSuccessCount,
+                        state.files.length,
                       ),
                       style: const TextStyle(color: Colors.black),
                     ),
@@ -109,16 +109,14 @@ class _SnackBarContentState extends State<_SnackBarContent> {
                         : widget.options.expandLessIcon,
                   ),
                   IconButton(
-                    onPressed: state.isUploaded
-                        ? () {
-                            widget.controller.closeSnackBar();
-                          }
+                    onPressed: state.isUploadIdle
+                        ? () => widget.controller.closeSnackBar()
                         : null,
                     icon: widget.options.closeIcon,
                   ),
                 ],
               ),
-              if (state.isUploaded && state.hasError)
+              if (state.isUploadIdle && state.hasError)
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Row(
@@ -163,9 +161,9 @@ class _SnackBarContentState extends State<_SnackBarContent> {
                     SizedBox(
                       height: 200,
                       child: ListView.builder(
-                        itemCount: state.uploading.length,
+                        itemCount: state.files.length,
                         itemBuilder: (context, index) => _ListItem(
-                          fileUploadInfo: state.uploading[index],
+                          fileUploadInfo: state.files[index],
                           options: widget.options,
                         ),
                       ),
@@ -197,21 +195,21 @@ class _ListItem extends StatelessWidget {
         fileUploadInfo.name ?? 'untitled',
         style: Theme.of(context).textTheme.bodyMedium,
       ),
-      subtitle: fileUploadInfo.isUploaded
-          ? null
-          : Padding(
+      subtitle: fileUploadInfo.status is FileUploadInprogress
+          ? Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: LinearProgressIndicator(
-                value: fileUploadInfo.progress / 100,
+                value: (fileUploadInfo.status as FileUploadInprogress).progress,
                 color: Theme.of(context).primaryColor,
                 backgroundColor: Colors.grey.shade300,
               ),
-            ),
-      leading: fileUploadInfo.isUploaded
-          ? fileUploadInfo.error != null
-              ? options.uploadFailedIcon
-              : options.uploadSuccessIcon
+            )
           : null,
+      leading: fileUploadInfo.status is FileUploadSuccess
+          ? options.uploadSuccessIcon
+          : fileUploadInfo.status is FileUploadFailure
+              ? options.uploadFailedIcon
+              : null,
     );
   }
 }

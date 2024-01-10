@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as path;
@@ -9,16 +10,9 @@ import 'package:uuid/uuid.dart';
 import 'file_upload_info.dart';
 import 'widgets/progress_snack_bar.dart';
 
-typedef FileUploadProgress = void Function({
-  required String id,
-  required int progress,
-  String? result,
-  Object? error,
-});
-
-typedef UploadFileTask = Future<String?> Function(
+typedef UploadFileTask = Future<FileUploadStatus> Function(
   FileUploadInfo fileUploadInfo,
-  FileUploadProgress uploadProgress,
+  void Function(String id, double progress) onUploadProgress,
 );
 
 typedef DeleteFileTask = Future Function(
@@ -46,32 +40,31 @@ class FileUploadController extends ValueNotifier<FileUploadState> {
     required BuildContext context,
     required List<File> files,
   }) async {
-    if (!value.isUploaded) {
-      developer.log('Cannot start upload while uploader inprogress');
+    if (value.isUploadInProgress) {
+      developer.log('Cannot start upload while upload is inprogress');
       return;
     }
 
-    final fileUploadInfos = files.map((file) => FileUploadInfo(
-          id: _uuid.v4(),
-          name: path.basename(file.path),
-          file: file,
-        ));
-    final newFiles = [...value.files, ...fileUploadInfos];
+    final fileUploadInfos = files
+        .map((file) => FileUploadInfo(
+              id: _uuid.v4(),
+              name: path.basename(file.path),
+              file: file,
+            ))
+        .toList();
 
     value = FileUploadState(
-      files: newFiles,
-      uploading:
-          newFiles.where((e) => e.progress == 0 && e.url == null).toList(),
+      files: [...value.files, ...fileUploadInfos],
     );
 
-    _handleUploadStart(context);
+    _handleUploadStart(context, fileUploadInfos);
   }
 
   void retryUpload({
     required BuildContext context,
     required List<FileUploadInfo> files,
   }) {
-    if (!value.isUploaded) {
+    if (value.isUploadInProgress) {
       developer.log('Cannot start retry while uploader inprogress');
       return;
     }
@@ -82,10 +75,8 @@ class FileUploadController extends ValueNotifier<FileUploadState> {
     final newFiles = value.files.map(
       (file) {
         if (fileIds.contains(file.id)) {
-          return FileUploadInfo(
-            id: file.id,
-            name: file.name,
-            file: file.file,
+          return file.copyWith(
+            status: const FileUploadInprogress(progress: 0),
           );
         }
         return file;
@@ -94,79 +85,96 @@ class FileUploadController extends ValueNotifier<FileUploadState> {
 
     value = FileUploadState(
       files: newFiles,
-      uploading: newFiles.where((e) => fileIds.contains(e.id)).toList(),
     );
 
-    _handleUploadStart(context);
+    _handleUploadStart(context, newFiles);
   }
 
-  Future<void> delete(String id) async {
+  Future<void> delete(FileUploadInfo fileUploadInfo) async {
     value = FileUploadState(
-      files: value.files.where((e) => e.id != id).toList(),
-      uploading: value.uploading.where((e) => e.id != id).toList(),
+      files: value.files.where((e) => e.id != fileUploadInfo.id).toList(),
     );
 
-    try {
-      await _deleteFileTask.call(id);
-    } catch (e) {
-      developer.log(e.toString());
+    if (fileUploadInfo.status is FileUploadSuccess) {
+      final remoteId = (fileUploadInfo.status as FileUploadSuccess).remoteId;
+
+      try {
+        await _deleteFileTask.call(remoteId);
+      } catch (e) {
+        developer.log(e.toString());
+      }
     }
   }
 
+  /// Map<remoteId, url>
   void addUploadedFiles({
-    required List<FileUploadInfo> files,
+    required List<Map<String, String?>> files,
   }) {
     final uploadedFiles = files.map(
-      (file) => file.copyWith(progress: 100),
+      (file) => FileUploadInfo(
+        id: _uuid.v4(),
+        status: FileUploadSuccess(
+          remoteId: file['id'] as String,
+          url: file['url'],
+        ),
+      ),
     );
 
     value = FileUploadState(
       files: [...value.files, ...uploadedFiles],
-      uploading: value.uploading,
     );
   }
 
-  void _handleUploadStart(BuildContext context) {
-    if (value.uploading.isEmpty) return;
+  void _handleUploadStart(BuildContext context, List<FileUploadInfo> files) {
+    if (files.isEmpty) return;
 
-    for (int i = 0; i < value.uploading.length; i++) {
+    for (int i = 0; i < files.length; i++) {
       _doUpload(
-        uploadFileInfo: value.uploading[i],
-        uploadProgress: _handleUploadProgress,
+        uploadFileInfo: files[i],
+        onUploadProgress: _handleUploadProgress,
       );
     }
 
     _progressSnackBar.showSnackBar(context: context, controller: this);
   }
 
-  void _handleUploadProgress({
-    required String id,
-    required int progress,
-    String? result,
-    Object? error,
-  }) {
-    final index = value.uploading.indexWhere((e) => e.id == id);
+  void _handleUploadProgress(String id, double progress) {
+    final item = value.files.firstWhereOrNull((e) => e.id == id);
+    if (item == null) return;
 
-    if (index != -1) {
-      FileUploadInfo item = value.uploading[index];
-      item = item.copyWith(
-        id: result ?? id,
-        progress: progress,
-        error: error,
-      );
+    final newFiles = value.files.map((file) {
+      if (file.id == id) {
+        return item.copyWith(
+          status: FileUploadInprogress(progress: progress),
+        );
+      }
+      return file;
+    }).toList();
 
-      value = FileUploadState(
-        files: value.files.map((e) => e.id == id ? item : e).toList(),
-        uploading: value.uploading.map((e) => e.id == id ? item : e).toList(),
-      );
-    }
+    value = FileUploadState(files: newFiles);
+  }
 
-    if (value.isUploaded) {
-      _handleUploadEnd();
+  void _handleUploadComplete(String id, FileUploadStatus result) {
+    final item = value.files.firstWhereOrNull((e) => e.id == id);
+    if (item == null) return;
+
+    final newFiles = value.files.map((file) {
+      if (file.id == id) {
+        return item.copyWith(
+          status: result,
+        );
+      }
+      return file;
+    }).toList();
+
+    value = FileUploadState(files: newFiles);
+
+    if (value.isUploadIdle) {
+      _handleUploadCompleteAll();
     }
   }
 
-  void _handleUploadEnd() {
+  void _handleUploadCompleteAll() {
     _onUploadEnd?.call();
   }
 
@@ -175,64 +183,58 @@ class FileUploadController extends ValueNotifier<FileUploadState> {
   }
 
   List<FileUploadInfo> getErrorFiles() {
-    return value.files.where((e) => e.error != null).toList();
+    return value.files.where((e) => e.status is FileUploadFailure).toList();
   }
 
   Future<void> _doUpload({
     required FileUploadInfo uploadFileInfo,
-    required FileUploadProgress uploadProgress,
+    required void Function(String id, double progress) onUploadProgress,
   }) async {
-    if (uploadFileInfo.isUploaded) return;
+    if (uploadFileInfo.status is FileUploadSuccess) return;
 
     try {
       final result = await _uploadFileTask.call(
         uploadFileInfo,
-        uploadProgress,
+        onUploadProgress,
       );
 
-      // Send finish progress
-      uploadProgress(
-        id: uploadFileInfo.id,
-        progress: 100,
-        result: result,
-      );
-    } catch (e) {
-      uploadProgress(
-        id: uploadFileInfo.id,
-        progress: 0,
-        error: e,
+      _handleUploadComplete(uploadFileInfo.id, result);
+    } catch (e, s) {
+      _handleUploadComplete(
+        uploadFileInfo.id,
+        FileUploadFailure(exception: e, stackTrace: s),
       );
     }
-  }
-
-  @override
-  void dispose() {
-    _progressSnackBar.hideSnackBar();
-    super.dispose();
   }
 }
 
 class FileUploadState extends Equatable {
   final List<FileUploadInfo> files;
-  final List<FileUploadInfo> uploading;
 
-  bool get isUploaded => uploading.every((e) => e.isUploaded);
+  bool get isUploadInProgress {
+    final result = files.any((e) => e.status is FileUploadInprogress);
+    return result;
+  }
 
-  bool get hasError => files.any((e) => e.error != null);
+  bool get isUploadIdle {
+    final result = !isUploadInProgress;
+    return result;
+  }
 
-  int get uploadingCount => uploading.length;
+  bool get hasError {
+    final result = files.any((e) => e.status is FileUploadFailure);
+    return result;
+  }
 
-  int get uploadedCount =>
-      uploading.where((e) => e.isUploaded && e.error == null).length;
+  int get uploadSuccessCount {
+    final result = files.where((e) => e.status is FileUploadSuccess).length;
+    return result;
+  }
 
   const FileUploadState({
     this.files = const [],
-    this.uploading = const [],
   });
 
   @override
-  List<Object> get props => [
-        files,
-        uploading,
-      ];
+  List<Object> get props => [files];
 }

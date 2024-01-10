@@ -73,16 +73,17 @@ class UploadImagePreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (fileUploadInfo.error != null) {
+    if (fileUploadInfo.status is FileUploadFailure) {
       return _ImageItemUploadFailed(
         onRetryPressed: onRetryUploadPressed,
         onImagesDeleted: onDeletedPressed,
       );
     }
 
-    if (fileUploadInfo.isUploaded) {
+    if (fileUploadInfo.status is FileUploadSuccess) {
       return _ImageItemUploadSuccess(
-        fileUploadInfo: fileUploadInfo,
+        file: fileUploadInfo.file,
+        url: (fileUploadInfo.status as FileUploadSuccess).url,
         onImagesDeleted: onDeletedPressed,
       );
     }
@@ -206,12 +207,14 @@ class _ImageItemUploadFailed extends StatelessWidget {
 
 /// อัปโหลดสำเร็จ (แสดงรูปภาพ)
 class _ImageItemUploadSuccess extends StatelessWidget {
-  final FileUploadInfo fileUploadInfo;
+  final File? file;
+  final String? url;
   final VoidCallback? onImagesDeleted;
 
   const _ImageItemUploadSuccess({
     Key? key,
-    required this.fileUploadInfo,
+    required this.file,
+    required this.url,
     required this.onImagesDeleted,
   }) : super(key: key);
 
@@ -228,8 +231,8 @@ class _ImageItemUploadSuccess extends StatelessWidget {
           children: [
             Center(
               child: UploadImageThumbnail(
-                file: fileUploadInfo.file,
-                imageUrl: fileUploadInfo.url,
+                file: file,
+                imageUrl: url,
               ),
             ),
             Align(
