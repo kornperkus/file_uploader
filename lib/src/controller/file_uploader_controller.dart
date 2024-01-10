@@ -275,8 +275,8 @@ class FileUploadController extends ValueNotifier<FileUploadState> {
     _onUploadEnd?.call();
   }
 
-  void closeSnackBar() {
-    _progressSnackBar.hideSnackBar();
+  void closeSnackBar(BuildContext context) {
+    _progressSnackBar.hideSnackBar(context);
   }
 
   Future<void> _doUpload({

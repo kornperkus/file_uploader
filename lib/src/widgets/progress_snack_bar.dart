@@ -7,33 +7,31 @@ import '../model/file_upload_info.dart';
 import '../model/file_upload_status.dart';
 
 class UploadProgressSnackBar {
-  ScaffoldFeatureController? _snackBarController;
-
   void showSnackBar({
     required BuildContext context,
     required FileUploadController controller,
     UploadProgressSnackBarOptions options =
         const UploadProgressSnackBarOptions(),
   }) {
-    final scaffoldMessenger = ScaffoldMessenger.maybeOf(context);
-    scaffoldMessenger?.hideCurrentSnackBar();
-    _snackBarController = scaffoldMessenger?.showSnackBar(
-      SnackBar(
-        content: _SnackBarContent(
-          controller: controller,
-          options: options,
+    ScaffoldMessenger.maybeOf(context)
+      ?..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: _SnackBarContent(
+            controller: controller,
+            options: options,
+          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: options.backgroundColor,
+          dismissDirection: DismissDirection.none,
+          padding: EdgeInsets.zero,
+          duration: const Duration(hours: 1),
         ),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: options.backgroundColor,
-        dismissDirection: DismissDirection.none,
-        padding: EdgeInsets.zero,
-        duration: const Duration(hours: 1),
-      ),
-    );
+      );
   }
 
-  void hideSnackBar() {
-    _snackBarController?.close();
+  void hideSnackBar(BuildContext context) {
+    ScaffoldMessenger.maybeOf(context)?.hideCurrentSnackBar();
   }
 }
 
@@ -111,7 +109,7 @@ class _SnackBarContentState extends State<_SnackBarContent> {
                   ),
                   IconButton(
                     onPressed: state.isUploadIdle
-                        ? () => widget.controller.closeSnackBar()
+                        ? () => widget.controller.closeSnackBar(context)
                         : null,
                     icon: widget.options.closeIcon,
                   ),

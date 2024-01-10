@@ -70,6 +70,17 @@ class _MyHomePageState extends State<MyHomePage> {
           'Demo Page',
           style: TextStyle(color: Colors.black),
         ),
+        actions: [
+          IconButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            },
+            icon: const Icon(
+              Icons.close,
+              color: Colors.black,
+            ),
+          ),
+        ],
       ),
       body: FileUploaderBuilder(
         controller: fileUploadController,
