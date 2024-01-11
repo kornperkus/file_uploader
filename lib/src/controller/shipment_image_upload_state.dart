@@ -1,6 +1,6 @@
-part of 'file_uploader_controller.dart';
+part of 'shipment_image_upload_controller.dart';
 
-class FileUploadState extends Equatable {
+class ShipmentImageUploadState extends Equatable {
   final List<FileUploadInfo> productImages;
   final List<FileUploadInfo> docImages;
   final List<FileUploadInfo> coverImages;
@@ -43,7 +43,7 @@ class FileUploadState extends Equatable {
     return result;
   }
 
-  const FileUploadState({
+  const ShipmentImageUploadState({
     this.productImages = const [],
     this.docImages = const [],
     this.coverImages = const [],
@@ -54,13 +54,13 @@ class FileUploadState extends Equatable {
   List<Object> get props =>
       [productImages, docImages, coverImages, uploadingImageIds];
 
-  FileUploadState copyWith({
+  ShipmentImageUploadState copyWith({
     List<FileUploadInfo>? productImages,
     List<FileUploadInfo>? docImages,
     List<FileUploadInfo>? coverImages,
     List<String>? uploadingImageIds,
   }) {
-    return FileUploadState(
+    return ShipmentImageUploadState(
       productImages: productImages ?? this.productImages,
       docImages: docImages ?? this.docImages,
       coverImages: coverImages ?? this.coverImages,

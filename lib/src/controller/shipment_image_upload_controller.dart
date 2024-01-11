@@ -6,6 +6,7 @@ import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as path;
+import 'package:state_notifier/state_notifier.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:file_uploader/src/enum/image_group.dart';
@@ -14,15 +15,11 @@ import '../model/file_upload_info.dart';
 import '../model/file_upload_status.dart';
 import '../widgets/progress_snack_bar.dart';
 
-part 'file_uploader_state.dart';
+part 'shipment_image_upload_state.dart';
 
-class FileUploadController extends ValueNotifier<FileUploadState> {
-  final void Function()? _onUploadEnd;
-
-  FileUploadController({
-    void Function()? onUploadEnd,
-  })  : _onUploadEnd = onUploadEnd,
-        super(const FileUploadState());
+class ShipmentImageUploadController
+    extends StateNotifier<ShipmentImageUploadState> {
+  ShipmentImageUploadController() : super(const ShipmentImageUploadState());
 
   final _uuid = const Uuid();
   final _progressSnackBar = UploadProgressSnackBar();
@@ -32,7 +29,7 @@ class FileUploadController extends ValueNotifier<FileUploadState> {
     required List<File> files,
     required ImageGroup imageGroup,
   }) async {
-    if (value.isUploadInProgress) {
+    if (state.isUploadInProgress) {
       developer.log('Cannot start upload while upload is inprogress');
       return;
     }
@@ -48,18 +45,18 @@ class FileUploadController extends ValueNotifier<FileUploadState> {
 
     switch (imageGroup) {
       case ImageGroup.product:
-        value = value.copyWith(
-          productImages: [...value.productImages, ...fileUploadInfos],
+        state = state.copyWith(
+          productImages: [...state.productImages, ...fileUploadInfos],
         );
         break;
       case ImageGroup.document:
-        value = value.copyWith(
-          docImages: [...value.docImages, ...fileUploadInfos],
+        state = state.copyWith(
+          docImages: [...state.docImages, ...fileUploadInfos],
         );
         break;
       case ImageGroup.truckCover:
-        value = value.copyWith(
-          coverImages: [...value.coverImages, ...fileUploadInfos],
+        state = state.copyWith(
+          coverImages: [...state.coverImages, ...fileUploadInfos],
         );
         break;
     }
@@ -71,15 +68,15 @@ class FileUploadController extends ValueNotifier<FileUploadState> {
     required BuildContext context,
     required List<FileUploadInfo> files,
   }) {
-    if (value.isUploadInProgress) {
+    if (state.isUploadInProgress) {
       developer.log('Cannot start retry while uploader inprogress');
       return;
     }
 
-    FileUploadState newState = FileUploadState(
-      productImages: value.productImages,
-      docImages: value.docImages,
-      coverImages: value.coverImages,
+    ShipmentImageUploadState newState = ShipmentImageUploadState(
+      productImages: state.productImages,
+      docImages: state.docImages,
+      coverImages: state.coverImages,
     );
 
     for (final file in files) {
@@ -113,28 +110,28 @@ class FileUploadController extends ValueNotifier<FileUploadState> {
       }
     }
 
-    value = newState;
+    state = newState;
     _handleUploadStart(context, files);
   }
 
   Future<void> delete(FileUploadInfo fileUploadInfo) async {
     switch (fileUploadInfo.imageGroup) {
       case ImageGroup.product:
-        value = value.copyWith(
-          productImages: value.productImages
+        state = state.copyWith(
+          productImages: state.productImages
               .where((e) => e.id != fileUploadInfo.id)
               .toList(),
         );
         break;
       case ImageGroup.document:
-        value = value.copyWith(
+        state = state.copyWith(
           docImages:
-              value.docImages.where((e) => e.id != fileUploadInfo.id).toList(),
+              state.docImages.where((e) => e.id != fileUploadInfo.id).toList(),
         );
         break;
       case ImageGroup.truckCover:
-        value = value.copyWith(
-          coverImages: value.coverImages
+        state = state.copyWith(
+          coverImages: state.coverImages
               .where((e) => e.id != fileUploadInfo.id)
               .toList(),
         );
@@ -170,18 +167,18 @@ class FileUploadController extends ValueNotifier<FileUploadState> {
 
     switch (imageGroup) {
       case ImageGroup.product:
-        value = value.copyWith(
-          productImages: [...value.productImages, ...uploadedFiles],
+        state = state.copyWith(
+          productImages: [...state.productImages, ...uploadedFiles],
         );
         break;
       case ImageGroup.document:
-        value = value.copyWith(
-          docImages: [...value.docImages, ...uploadedFiles],
+        state = state.copyWith(
+          docImages: [...state.docImages, ...uploadedFiles],
         );
         break;
       case ImageGroup.truckCover:
-        value = value.copyWith(
-          coverImages: [...value.coverImages, ...uploadedFiles],
+        state = state.copyWith(
+          coverImages: [...state.coverImages, ...uploadedFiles],
         );
         break;
     }
@@ -189,7 +186,7 @@ class FileUploadController extends ValueNotifier<FileUploadState> {
 
   void _handleUploadStart(BuildContext context, List<FileUploadInfo> files) {
     final fileIds = files.map((e) => e.id).toList();
-    value = value.copyWith(uploadingImageIds: fileIds);
+    state = state.copyWith(uploadingImageIds: fileIds);
 
     if (files.isEmpty) return;
 
@@ -204,7 +201,7 @@ class FileUploadController extends ValueNotifier<FileUploadState> {
   }
 
   void _handleUploadProgress(String id, double progress) {
-    final item = value.allImages.firstWhereOrNull((e) => e.id == id);
+    final item = state.allImages.firstWhereOrNull((e) => e.id == id);
     if (item == null) return;
 
     final updatedItem = item.copyWith(
@@ -213,21 +210,21 @@ class FileUploadController extends ValueNotifier<FileUploadState> {
 
     switch (item.imageGroup) {
       case ImageGroup.product:
-        value = value.copyWith(
-          productImages: value.productImages
+        state = state.copyWith(
+          productImages: state.productImages
               .map((e) => e.id == id ? updatedItem : e)
               .toList(),
         );
         break;
       case ImageGroup.document:
-        value = value.copyWith(
+        state = state.copyWith(
           docImages:
-              value.docImages.map((e) => e.id == id ? updatedItem : e).toList(),
+              state.docImages.map((e) => e.id == id ? updatedItem : e).toList(),
         );
         break;
       case ImageGroup.truckCover:
-        value = value.copyWith(
-          coverImages: value.coverImages
+        state = state.copyWith(
+          coverImages: state.coverImages
               .map((e) => e.id == id ? updatedItem : e)
               .toList(),
         );
@@ -236,7 +233,7 @@ class FileUploadController extends ValueNotifier<FileUploadState> {
   }
 
   void _handleUploadComplete(String id, FileUploadStatus result) {
-    final item = value.allImages.firstWhereOrNull((e) => e.id == id);
+    final item = state.allImages.firstWhereOrNull((e) => e.id == id);
     if (item == null) return;
 
     final updatedItem = item.copyWith(
@@ -245,34 +242,26 @@ class FileUploadController extends ValueNotifier<FileUploadState> {
 
     switch (item.imageGroup) {
       case ImageGroup.product:
-        value = value.copyWith(
-          productImages: value.productImages
+        state = state.copyWith(
+          productImages: state.productImages
               .map((e) => e.id == id ? updatedItem : e)
               .toList(),
         );
         break;
       case ImageGroup.document:
-        value = value.copyWith(
+        state = state.copyWith(
           docImages:
-              value.docImages.map((e) => e.id == id ? updatedItem : e).toList(),
+              state.docImages.map((e) => e.id == id ? updatedItem : e).toList(),
         );
         break;
       case ImageGroup.truckCover:
-        value = value.copyWith(
-          coverImages: value.coverImages
+        state = state.copyWith(
+          coverImages: state.coverImages
               .map((e) => e.id == id ? updatedItem : e)
               .toList(),
         );
         break;
     }
-
-    if (value.isUploadIdle) {
-      _handleUploadCompleteAll();
-    }
-  }
-
-  void _handleUploadCompleteAll() {
-    _onUploadEnd?.call();
   }
 
   void closeSnackBar(BuildContext context) {

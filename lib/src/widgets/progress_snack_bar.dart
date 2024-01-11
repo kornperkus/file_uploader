@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:file_uploader/l10n/flutter_gen/localizations.dart';
 import 'package:file_uploader/l10n/flutter_gen/localizations_en.dart';
+import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 
-import '../controller/file_uploader_controller.dart';
+import '../controller/shipment_image_upload_controller.dart';
 import '../model/file_upload_info.dart';
 import '../model/file_upload_status.dart';
 
 class UploadProgressSnackBar {
   void showSnackBar({
     required BuildContext context,
-    required FileUploadController controller,
+    required ShipmentImageUploadController controller,
     UploadProgressSnackBarOptions options =
         const UploadProgressSnackBarOptions(),
   }) {
@@ -36,7 +37,7 @@ class UploadProgressSnackBar {
 }
 
 class _SnackBarContent extends StatefulWidget {
-  final FileUploadController controller;
+  final ShipmentImageUploadController controller;
   final UploadProgressSnackBarOptions options;
 
   const _SnackBarContent({
@@ -57,8 +58,8 @@ class _SnackBarContentState extends State<_SnackBarContent> {
     final localizations =
         FileUploaderLocalizations.of(context) ?? FileUploaderLocalizationsEn();
 
-    return ValueListenableBuilder<FileUploadState>(
-      valueListenable: widget.controller,
+    return StateNotifierBuilder<ShipmentImageUploadState>(
+      stateNotifier: widget.controller,
       builder: (context, state, _) {
         return Padding(
           padding: const EdgeInsets.all(12),

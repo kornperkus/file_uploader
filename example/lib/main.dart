@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_uploader/file_uploader.dart';
 import 'package:file_uploader/l10n/flutter_gen/localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
@@ -43,20 +46,12 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  late final FileUploadController fileUploadController;
-
+class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin {
+  final shipmentImageUploadController = ShipmentImageUploadController();
   final Uuid _uuid = const Uuid();
 
   @override
-  void initState() {
-    super.initState();
-    fileUploadController = FileUploadController(
-        // progressSnackBarOptions: const ProgressSnackBarOptions(
-        //   uploadSuccessIcon: Icon(Icons.done, color: Colors.green),
-        // ),
-        );
-
+  FutureOr<void> afterFirstLayout(BuildContext context) {
     _addUploadedFiles(ImageGroup.product);
     _addUploadedFiles(ImageGroup.document);
   }
@@ -82,8 +77,8 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
       ),
-      body: FileUploaderBuilder(
-        controller: fileUploadController,
+      body: StateNotifierBuilder<ShipmentImageUploadState>(
+        stateNotifier: shipmentImageUploadController,
         builder: (context, state, _) {
           return CustomScrollView(
             slivers: [
@@ -99,7 +94,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           final files = await _getMockFiles();
 
                           if (!mounted) return;
-                          fileUploadController.upload(
+                          shipmentImageUploadController.upload(
                             context: context,
                             files: files,
                             imageGroup: ImageGroup.product,
@@ -125,9 +120,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     color: Colors.grey.shade100,
                     child: UploadImagePreview(
                       fileUploadInfo: item,
-                      onRetryUploadPressed: () => fileUploadController
+                      onRetryUploadPressed: () => shipmentImageUploadController
                           .retryUpload(context: context, files: [item]),
-                      onDeletedPressed: () => fileUploadController.delete(item),
+                      onDeletedPressed: () =>
+                          shipmentImageUploadController.delete(item),
                     ),
                   );
                 },
@@ -144,7 +140,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           final files = await _getMockFiles();
 
                           if (!mounted) return;
-                          fileUploadController.upload(
+                          shipmentImageUploadController.upload(
                             context: context,
                             files: files,
                             imageGroup: ImageGroup.document,
@@ -170,9 +166,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     color: Colors.grey.shade100,
                     child: UploadImagePreview(
                       fileUploadInfo: item,
-                      onRetryUploadPressed: () => fileUploadController
+                      onRetryUploadPressed: () => shipmentImageUploadController
                           .retryUpload(context: context, files: [item]),
-                      onDeletedPressed: () => fileUploadController.delete(item),
+                      onDeletedPressed: () =>
+                          shipmentImageUploadController.delete(item),
                     ),
                   );
                 },
@@ -189,7 +186,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           final files = await _getMockFiles();
 
                           if (!mounted) return;
-                          fileUploadController.upload(
+                          shipmentImageUploadController.upload(
                             context: context,
                             files: files,
                             imageGroup: ImageGroup.truckCover,
@@ -215,9 +212,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     color: Colors.grey.shade100,
                     child: UploadImagePreview(
                       fileUploadInfo: item,
-                      onRetryUploadPressed: () => fileUploadController
+                      onRetryUploadPressed: () => shipmentImageUploadController
                           .retryUpload(context: context, files: [item]),
-                      onDeletedPressed: () => fileUploadController.delete(item),
+                      onDeletedPressed: () =>
+                          shipmentImageUploadController.delete(item),
                     ),
                   );
                 },
@@ -230,7 +228,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _addUploadedFiles(ImageGroup imageGroup) async {
-    fileUploadController.addUploadedFiles(
+    shipmentImageUploadController.addUploadedFiles(
       files: [
         {
           'id': _uuid.v4(),
