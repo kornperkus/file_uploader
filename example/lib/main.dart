@@ -34,7 +34,26 @@ class MyApp extends StatelessWidget {
         Locale('en'),
         Locale('th'),
       ],
-      home: const MyHomePage(),
+      home: const IntroPage(),
+    );
+  }
+}
+
+class IntroPage extends StatelessWidget {
+  const IntroPage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: IconButton(
+          onPressed: () {
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const MyHomePage()));
+          },
+          icon: const Icon(Icons.upload),
+        ),
+      ),
     );
   }
 }
@@ -47,8 +66,18 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin {
-  final shipmentImageUploadController = ShipmentImageUploadController();
+  final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
+  late final ShipmentImageUploadController _shipmentImageUploadController;
   final Uuid _uuid = const Uuid();
+
+  @override
+  void initState() {
+    super.initState();
+    _shipmentImageUploadController = ShipmentImageUploadController(
+      scaffoldMessengerKey: _scaffoldMessengerKey,
+    );
+  }
 
   @override
   FutureOr<void> afterFirstLayout(BuildContext context) {
@@ -58,177 +87,181 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text(
-          'Demo Page',
-          style: TextStyle(color: Colors.black),
-        ),
-        actions: [
-          IconButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-            },
-            icon: const Icon(
-              Icons.close,
-              color: Colors.black,
-            ),
+    return ScaffoldMessenger(
+      key: _scaffoldMessengerKey,
+      child: Scaffold(
+        appBar: AppBar(
+          leading: const BackButton(color: Colors.black),
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          title: const Text(
+            'Demo Page',
+            style: TextStyle(color: Colors.black),
           ),
-        ],
-      ),
-      body: StateNotifierBuilder<ShipmentImageUploadState>(
-        stateNotifier: shipmentImageUploadController,
-        builder: (context, state, _) {
-          return CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  color: Colors.red,
-                  child: Row(
-                    children: [
-                      const Text('Product'),
-                      IconButton(
-                        onPressed: () async {
-                          final files = await _getMockFiles();
+          actions: [
+            IconButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              },
+              icon: const Icon(
+                Icons.close,
+                color: Colors.black,
+              ),
+            ),
+          ],
+        ),
+        body: StateNotifierBuilder<ShipmentImageUploadState>(
+          stateNotifier: _shipmentImageUploadController,
+          builder: (context, state, _) {
+            return CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    color: Colors.red,
+                    child: Row(
+                      children: [
+                        const Text('Product'),
+                        IconButton(
+                          onPressed: () async {
+                            final files = await _getMockFiles();
 
-                          if (!mounted) return;
-                          shipmentImageUploadController.uploadImages(
-                            context: context,
-                            imageFiles: files,
-                            imageGroup: ImageGroup.product,
-                          );
-                        },
-                        icon: const Icon(Icons.add),
-                      ),
-                    ],
+                            if (!mounted) return;
+                            _shipmentImageUploadController.uploadImages(
+                              imageFiles: files,
+                              imageGroup: ImageGroup.product,
+                            );
+                          },
+                          icon: const Icon(Icons.add),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              SliverGrid.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                ),
-                itemCount: state.productImages.length,
-                itemBuilder: (context, index) {
-                  final item = state.productImages[index];
-                  return Container(
-                    margin: const EdgeInsets.all(8),
-                    width: 100,
-                    height: 100,
-                    color: Colors.grey.shade100,
-                    child: UploadImagePreview(
-                      fileUploadInfo: item,
-                      onRetryUploadPressed: () => shipmentImageUploadController
-                          .retryUploadImages(context: context, images: [item]),
-                      onDeletedPressed: () =>
-                          shipmentImageUploadController.deleteImage(item),
-                    ),
-                  );
-                },
-              ),
-              SliverToBoxAdapter(
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  color: Colors.red,
-                  child: Row(
-                    children: [
-                      const Text('Document'),
-                      IconButton(
-                        onPressed: () async {
-                          final files = await _getMockFiles();
-
-                          if (!mounted) return;
-                          shipmentImageUploadController.uploadImages(
-                            context: context,
-                            imageFiles: files,
-                            imageGroup: ImageGroup.document,
-                          );
-                        },
-                        icon: const Icon(Icons.add),
+                SliverGrid.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                  ),
+                  itemCount: state.productImages.length,
+                  itemBuilder: (context, index) {
+                    final item = state.productImages[index];
+                    return Container(
+                      margin: const EdgeInsets.all(8),
+                      width: 100,
+                      height: 100,
+                      color: Colors.grey.shade100,
+                      child: UploadImagePreview(
+                        fileUploadInfo: item,
+                        onRetryUploadPressed: () =>
+                            _shipmentImageUploadController.retryUploadImages(
+                                context: context, images: [item]),
+                        onDeletedPressed: () =>
+                            _shipmentImageUploadController.deleteImage(item),
                       ),
-                    ],
+                    );
+                  },
+                ),
+                SliverToBoxAdapter(
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    color: Colors.red,
+                    child: Row(
+                      children: [
+                        const Text('Document'),
+                        IconButton(
+                          onPressed: () async {
+                            final files = await _getMockFiles();
+
+                            if (!mounted) return;
+                            _shipmentImageUploadController.uploadImages(
+                              imageFiles: files,
+                              imageGroup: ImageGroup.document,
+                            );
+                          },
+                          icon: const Icon(Icons.add),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              SliverGrid.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                ),
-                itemCount: state.docImages.length,
-                itemBuilder: (context, index) {
-                  final item = state.docImages[index];
-                  return Container(
-                    margin: const EdgeInsets.all(8),
-                    width: 100,
-                    height: 100,
-                    color: Colors.grey.shade100,
-                    child: UploadImagePreview(
-                      fileUploadInfo: item,
-                      onRetryUploadPressed: () => shipmentImageUploadController
-                          .retryUploadImages(context: context, images: [item]),
-                      onDeletedPressed: () =>
-                          shipmentImageUploadController.deleteImage(item),
-                    ),
-                  );
-                },
-              ),
-              SliverToBoxAdapter(
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  color: Colors.red,
-                  child: Row(
-                    children: [
-                      const Text('Cover'),
-                      IconButton(
-                        onPressed: () async {
-                          final files = await _getMockFiles();
-
-                          if (!mounted) return;
-                          shipmentImageUploadController.uploadImages(
-                            context: context,
-                            imageFiles: files,
-                            imageGroup: ImageGroup.cover,
-                          );
-                        },
-                        icon: const Icon(Icons.add),
+                SliverGrid.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                  ),
+                  itemCount: state.docImages.length,
+                  itemBuilder: (context, index) {
+                    final item = state.docImages[index];
+                    return Container(
+                      margin: const EdgeInsets.all(8),
+                      width: 100,
+                      height: 100,
+                      color: Colors.grey.shade100,
+                      child: UploadImagePreview(
+                        fileUploadInfo: item,
+                        onRetryUploadPressed: () =>
+                            _shipmentImageUploadController.retryUploadImages(
+                                context: context, images: [item]),
+                        onDeletedPressed: () =>
+                            _shipmentImageUploadController.deleteImage(item),
                       ),
-                    ],
+                    );
+                  },
+                ),
+                SliverToBoxAdapter(
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    color: Colors.red,
+                    child: Row(
+                      children: [
+                        const Text('Cover'),
+                        IconButton(
+                          onPressed: () async {
+                            final files = await _getMockFiles();
+
+                            if (!mounted) return;
+                            _shipmentImageUploadController.uploadImages(
+                              imageFiles: files,
+                              imageGroup: ImageGroup.cover,
+                            );
+                          },
+                          icon: const Icon(Icons.add),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              SliverGrid.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
+                SliverGrid.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                  ),
+                  itemCount: state.coverImages.length,
+                  itemBuilder: (context, index) {
+                    final item = state.coverImages[index];
+                    return Container(
+                      margin: const EdgeInsets.all(8),
+                      width: 100,
+                      height: 100,
+                      color: Colors.grey.shade100,
+                      child: UploadImagePreview(
+                        fileUploadInfo: item,
+                        onRetryUploadPressed: () =>
+                            _shipmentImageUploadController.retryUploadImages(
+                                context: context, images: [item]),
+                        onDeletedPressed: () =>
+                            _shipmentImageUploadController.deleteImage(item),
+                      ),
+                    );
+                  },
                 ),
-                itemCount: state.coverImages.length,
-                itemBuilder: (context, index) {
-                  final item = state.coverImages[index];
-                  return Container(
-                    margin: const EdgeInsets.all(8),
-                    width: 100,
-                    height: 100,
-                    color: Colors.grey.shade100,
-                    child: UploadImagePreview(
-                      fileUploadInfo: item,
-                      onRetryUploadPressed: () => shipmentImageUploadController
-                          .retryUploadImages(context: context, images: [item]),
-                      onDeletedPressed: () =>
-                          shipmentImageUploadController.deleteImage(item),
-                    ),
-                  );
-                },
-              ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
     );
   }
 
   void _addUploadedFiles(ImageGroup imageGroup) async {
-    shipmentImageUploadController.addUploadedImages(
+    _shipmentImageUploadController.addUploadedImages(
       imageDataList: [
         {
           'id': _uuid.v4(),
@@ -258,5 +291,11 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin {
     } catch (e) {
       return [];
     }
+  }
+
+  @override
+  void dispose() {
+    _shipmentImageUploadController.dispose();
+    super.dispose();
   }
 }

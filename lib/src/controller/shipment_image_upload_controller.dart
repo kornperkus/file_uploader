@@ -19,13 +19,18 @@ part 'shipment_image_upload_state.dart';
 
 class ShipmentImageUploadController
     extends StateNotifier<ShipmentImageUploadState> {
-  ShipmentImageUploadController() : super(const ShipmentImageUploadState());
+  ShipmentImageUploadController({
+    required GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey,
+    UploadProgressSnackBarOptions? options,
+  })  : _scaffoldMessengerKey = scaffoldMessengerKey,
+        _options = options ?? const UploadProgressSnackBarOptions(),
+        super(const ShipmentImageUploadState());
 
+  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey;
+  final UploadProgressSnackBarOptions _options;
   final _uuid = const Uuid();
-  final _progressSnackBar = UploadProgressSnackBar();
 
   void uploadImages({
-    required BuildContext context,
     required List<File> imageFiles,
     required ImageGroup imageGroup,
   }) async {
@@ -61,7 +66,7 @@ class ShipmentImageUploadController
         break;
     }
 
-    _handleUploadStart(context, fileUploadInfos);
+    _handleUploadStart(fileUploadInfos);
   }
 
   void retryUploadImages({
@@ -111,7 +116,7 @@ class ShipmentImageUploadController
     }
 
     state = newState;
-    _handleUploadStart(context, images);
+    _handleUploadStart(images);
   }
 
   Future<void> deleteImage(FileUploadInfo image) async {
@@ -182,7 +187,7 @@ class ShipmentImageUploadController
     }
   }
 
-  void _handleUploadStart(BuildContext context, List<FileUploadInfo> images) {
+  void _handleUploadStart(List<FileUploadInfo> images) {
     final imageIds = images.map((e) => e.id).toList();
     state = state.copyWith(uploadingImageIds: imageIds);
 
@@ -195,7 +200,7 @@ class ShipmentImageUploadController
       );
     }
 
-    _progressSnackBar.showSnackBar(context: context, controller: this);
+    _showSnackBar();
   }
 
   void _handleUploadProgress(String id, double progress) {
@@ -262,10 +267,6 @@ class ShipmentImageUploadController
     }
   }
 
-  void closeSnackBar(BuildContext context) {
-    _progressSnackBar.hideSnackBar(context);
-  }
-
   Future<void> _doUpload({
     required FileUploadInfo image,
     required void Function(String id, double progress) onUploadProgress,
@@ -285,6 +286,28 @@ class ShipmentImageUploadController
         FileUploadFailure(exception: e, stackTrace: s),
       );
     }
+  }
+
+  void _showSnackBar() {
+    _scaffoldMessengerKey.currentState
+      ?..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: SnackBarContent(
+            controller: this,
+            options: _options,
+          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: _options.backgroundColor,
+          dismissDirection: DismissDirection.none,
+          padding: EdgeInsets.zero,
+          duration: const Duration(hours: 1),
+        ),
+      );
+  }
+
+  void hideSnackBar() {
+    _scaffoldMessengerKey.currentState?.hideCurrentSnackBar();
   }
 
   Future<FileUploadStatus> _uploadProductImage(
@@ -309,5 +332,11 @@ class ShipmentImageUploadController
 
   Future<void> _deleteProductImage(String id) async {
     await Future.delayed(const Duration(seconds: 1));
+  }
+
+  @override
+  void dispose() {
+    _scaffoldMessengerKey.currentState?.removeCurrentSnackBar();
+    super.dispose();
   }
 }

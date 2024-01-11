@@ -7,50 +7,21 @@ import '../controller/shipment_image_upload_controller.dart';
 import '../model/file_upload_info.dart';
 import '../model/file_upload_status.dart';
 
-class UploadProgressSnackBar {
-  void showSnackBar({
-    required BuildContext context,
-    required ShipmentImageUploadController controller,
-    UploadProgressSnackBarOptions options =
-        const UploadProgressSnackBarOptions(),
-  }) {
-    ScaffoldMessenger.maybeOf(context)
-      ?..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: _SnackBarContent(
-            controller: controller,
-            options: options,
-          ),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: options.backgroundColor,
-          dismissDirection: DismissDirection.none,
-          padding: EdgeInsets.zero,
-          duration: const Duration(hours: 1),
-        ),
-      );
-  }
-
-  void hideSnackBar(BuildContext context) {
-    ScaffoldMessenger.maybeOf(context)?.hideCurrentSnackBar();
-  }
-}
-
-class _SnackBarContent extends StatefulWidget {
+class SnackBarContent extends StatefulWidget {
   final ShipmentImageUploadController controller;
   final UploadProgressSnackBarOptions options;
 
-  const _SnackBarContent({
+  const SnackBarContent({
     Key? key,
     required this.controller,
     required this.options,
   }) : super(key: key);
 
   @override
-  State<_SnackBarContent> createState() => _SnackBarContentState();
+  State<SnackBarContent> createState() => _SnackBarContentState();
 }
 
-class _SnackBarContentState extends State<_SnackBarContent> {
+class _SnackBarContentState extends State<SnackBarContent> {
   bool expanded = false;
 
   @override
@@ -110,7 +81,7 @@ class _SnackBarContentState extends State<_SnackBarContent> {
                   ),
                   IconButton(
                     onPressed: state.isUploadIdle
-                        ? () => widget.controller.closeSnackBar(context)
+                        ? () => widget.controller.hideSnackBar()
                         : null,
                     icon: widget.options.closeIcon,
                   ),
