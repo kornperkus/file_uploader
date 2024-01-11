@@ -335,7 +335,7 @@ class ShipmentImageUploadController
 
   @override
   void dispose() {
-    _scaffoldMessengerKey.currentState?.removeCurrentSnackBar();
+    _scaffoldMessengerKey.currentState?.hideCurrentSnackBar();
     super.dispose();
   }
 }
