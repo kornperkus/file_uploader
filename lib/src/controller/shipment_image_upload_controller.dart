@@ -24,9 +24,9 @@ class ShipmentImageUploadController
   final _uuid = const Uuid();
   final _progressSnackBar = UploadProgressSnackBar();
 
-  void upload({
+  void uploadImages({
     required BuildContext context,
-    required List<File> files,
+    required List<File> imageFiles,
     required ImageGroup imageGroup,
   }) async {
     if (state.isUploadInProgress) {
@@ -34,7 +34,7 @@ class ShipmentImageUploadController
       return;
     }
 
-    final fileUploadInfos = files
+    final fileUploadInfos = imageFiles
         .map((e) => FileUploadInfo(
               id: _uuid.v4(),
               name: path.basename(e.path),
@@ -54,7 +54,7 @@ class ShipmentImageUploadController
           docImages: [...state.docImages, ...fileUploadInfos],
         );
         break;
-      case ImageGroup.truckCover:
+      case ImageGroup.cover:
         state = state.copyWith(
           coverImages: [...state.coverImages, ...fileUploadInfos],
         );
@@ -64,9 +64,9 @@ class ShipmentImageUploadController
     _handleUploadStart(context, fileUploadInfos);
   }
 
-  void retryUpload({
+  void retryUploadImages({
     required BuildContext context,
-    required List<FileUploadInfo> files,
+    required List<FileUploadInfo> images,
   }) {
     if (state.isUploadInProgress) {
       developer.log('Cannot start retry while uploader inprogress');
@@ -79,31 +79,31 @@ class ShipmentImageUploadController
       coverImages: state.coverImages,
     );
 
-    for (final file in files) {
+    for (final image in images) {
       // Reset progress
-      final updatedItem = file.copyWith(
+      final updatedImage = image.copyWith(
         status: const FileUploadInprogress(progress: 0),
       );
 
-      switch (file.imageGroup) {
+      switch (image.imageGroup) {
         case ImageGroup.product:
           newState = newState.copyWith(
             productImages: newState.productImages
-                .map((e) => e.id == file.id ? updatedItem : e)
+                .map((e) => e.id == image.id ? updatedImage : e)
                 .toList(),
           );
           break;
         case ImageGroup.document:
           newState = newState.copyWith(
             docImages: newState.docImages
-                .map((e) => e.id == file.id ? updatedItem : e)
+                .map((e) => e.id == image.id ? updatedImage : e)
                 .toList(),
           );
           break;
-        case ImageGroup.truckCover:
+        case ImageGroup.cover:
           newState = newState.copyWith(
             coverImages: newState.coverImages
-                .map((e) => e.id == file.id ? updatedItem : e)
+                .map((e) => e.id == image.id ? updatedImage : e)
                 .toList(),
           );
           break;
@@ -111,35 +111,33 @@ class ShipmentImageUploadController
     }
 
     state = newState;
-    _handleUploadStart(context, files);
+    _handleUploadStart(context, images);
   }
 
-  Future<void> delete(FileUploadInfo fileUploadInfo) async {
-    switch (fileUploadInfo.imageGroup) {
+  Future<void> deleteImage(FileUploadInfo image) async {
+    switch (image.imageGroup) {
       case ImageGroup.product:
         state = state.copyWith(
-          productImages: state.productImages
-              .where((e) => e.id != fileUploadInfo.id)
-              .toList(),
+          productImages:
+              state.productImages.where((e) => e.id != image.id).toList(),
         );
         break;
       case ImageGroup.document:
         state = state.copyWith(
-          docImages:
-              state.docImages.where((e) => e.id != fileUploadInfo.id).toList(),
+          docImages: state.docImages.where((e) => e.id != image.id).toList(),
         );
         break;
-      case ImageGroup.truckCover:
+      case ImageGroup.cover:
         state = state.copyWith(
-          coverImages: state.coverImages
-              .where((e) => e.id != fileUploadInfo.id)
-              .toList(),
+          coverImages:
+              state.coverImages.where((e) => e.id != image.id).toList(),
         );
         break;
     }
 
-    if (fileUploadInfo.status is FileUploadSuccess) {
-      final remoteId = (fileUploadInfo.status as FileUploadSuccess).remoteId;
+    // Call delete image api
+    if (image.status is FileUploadSuccess) {
+      final remoteId = (image.status as FileUploadSuccess).remoteId;
 
       try {
         await _deleteProductImage(remoteId);
@@ -150,11 +148,11 @@ class ShipmentImageUploadController
   }
 
   /// Map<remoteId, url>
-  void addUploadedFiles({
-    required List<Map<String, String?>> files,
+  void addUploadedImages({
+    required List<Map<String, String?>> imageDataList,
     required ImageGroup imageGroup,
   }) {
-    final uploadedFiles = files.map(
+    final images = imageDataList.map(
       (e) => FileUploadInfo(
         id: _uuid.v4(),
         imageGroup: imageGroup,
@@ -168,31 +166,31 @@ class ShipmentImageUploadController
     switch (imageGroup) {
       case ImageGroup.product:
         state = state.copyWith(
-          productImages: [...state.productImages, ...uploadedFiles],
+          productImages: [...state.productImages, ...images],
         );
         break;
       case ImageGroup.document:
         state = state.copyWith(
-          docImages: [...state.docImages, ...uploadedFiles],
+          docImages: [...state.docImages, ...images],
         );
         break;
-      case ImageGroup.truckCover:
+      case ImageGroup.cover:
         state = state.copyWith(
-          coverImages: [...state.coverImages, ...uploadedFiles],
+          coverImages: [...state.coverImages, ...images],
         );
         break;
     }
   }
 
-  void _handleUploadStart(BuildContext context, List<FileUploadInfo> files) {
-    final fileIds = files.map((e) => e.id).toList();
-    state = state.copyWith(uploadingImageIds: fileIds);
+  void _handleUploadStart(BuildContext context, List<FileUploadInfo> images) {
+    final imageIds = images.map((e) => e.id).toList();
+    state = state.copyWith(uploadingImageIds: imageIds);
 
-    if (files.isEmpty) return;
+    if (images.isEmpty) return;
 
-    for (final file in files) {
+    for (final image in images) {
       _doUpload(
-        uploadFileInfo: file,
+        image: image,
         onUploadProgress: _handleUploadProgress,
       );
     }
@@ -222,7 +220,7 @@ class ShipmentImageUploadController
               state.docImages.map((e) => e.id == id ? updatedItem : e).toList(),
         );
         break;
-      case ImageGroup.truckCover:
+      case ImageGroup.cover:
         state = state.copyWith(
           coverImages: state.coverImages
               .map((e) => e.id == id ? updatedItem : e)
@@ -254,7 +252,7 @@ class ShipmentImageUploadController
               state.docImages.map((e) => e.id == id ? updatedItem : e).toList(),
         );
         break;
-      case ImageGroup.truckCover:
+      case ImageGroup.cover:
         state = state.copyWith(
           coverImages: state.coverImages
               .map((e) => e.id == id ? updatedItem : e)
@@ -269,28 +267,28 @@ class ShipmentImageUploadController
   }
 
   Future<void> _doUpload({
-    required FileUploadInfo uploadFileInfo,
+    required FileUploadInfo image,
     required void Function(String id, double progress) onUploadProgress,
   }) async {
-    if (uploadFileInfo.status is FileUploadSuccess) return;
+    if (image.status is FileUploadSuccess) return;
 
     try {
       final result = await _uploadProductImage(
-        uploadFileInfo,
+        image,
         onUploadProgress,
       );
 
-      _handleUploadComplete(uploadFileInfo.id, result);
+      _handleUploadComplete(image.id, result);
     } catch (e, s) {
       _handleUploadComplete(
-        uploadFileInfo.id,
+        image.id,
         FileUploadFailure(exception: e, stackTrace: s),
       );
     }
   }
 
   Future<FileUploadStatus> _uploadProductImage(
-    FileUploadInfo fileUploadInfo,
+    FileUploadInfo image,
     void Function(String id, double progress) onUploadProgress,
   ) async {
     double progress = 0;
@@ -299,7 +297,7 @@ class ShipmentImageUploadController
     while (progress < 1) {
       await Future.delayed(Duration(milliseconds: rand.nextInt(1000)));
       progress = progress + 0.1;
-      onUploadProgress(fileUploadInfo.id, progress);
+      onUploadProgress(image.id, progress);
     }
 
     if (Random().nextBool()) {

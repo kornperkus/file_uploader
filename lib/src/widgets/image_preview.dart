@@ -7,59 +7,6 @@ import 'package:file_uploader/l10n/flutter_gen/localizations_en.dart';
 import '../model/file_upload_info.dart';
 import '../model/file_upload_status.dart';
 
-class UploadImageThumbnail extends StatelessWidget {
-  final File? file;
-  final String? imageUrl;
-
-  const UploadImageThumbnail({
-    Key? key,
-    this.file,
-    this.imageUrl,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, boxConstraints) {
-        final width = boxConstraints.maxHeight;
-        final cacheWidth = _getImageCacheSize(context, width);
-
-        if (file != null) {
-          return Image.file(
-            file!,
-            fit: BoxFit.cover,
-            width: width,
-            cacheWidth: cacheWidth,
-          );
-        }
-
-        if (imageUrl != null) {
-          return Image.network(
-            imageUrl!,
-            fit: BoxFit.cover,
-            width: width,
-            cacheWidth: cacheWidth,
-          );
-        }
-
-        return SizedBox(
-          width: width,
-          height: width,
-          child: const Icon(
-            Icons.warning,
-            size: 30,
-          ),
-        );
-      },
-    );
-  }
-
-  int _getImageCacheSize(BuildContext context, double widgetSize) {
-    final devicePixelRatio = MediaQuery.of(context).devicePixelRatio;
-    return (devicePixelRatio * widgetSize).round();
-  }
-}
-
 class UploadImagePreview extends StatelessWidget {
   final FileUploadInfo fileUploadInfo;
   final VoidCallback? onRetryUploadPressed;
@@ -257,5 +204,58 @@ class _ImageItemUploadSuccess extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class UploadImageThumbnail extends StatelessWidget {
+  final File? file;
+  final String? imageUrl;
+
+  const UploadImageThumbnail({
+    Key? key,
+    this.file,
+    this.imageUrl,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, boxConstraints) {
+        final width = boxConstraints.maxHeight;
+        final cacheWidth = _getImageCacheSize(context, width);
+
+        if (file != null) {
+          return Image.file(
+            file!,
+            fit: BoxFit.cover,
+            width: width,
+            cacheWidth: cacheWidth,
+          );
+        }
+
+        if (imageUrl != null) {
+          return Image.network(
+            imageUrl!,
+            fit: BoxFit.cover,
+            width: width,
+            cacheWidth: cacheWidth,
+          );
+        }
+
+        return SizedBox(
+          width: width,
+          height: width,
+          child: const Icon(
+            Icons.warning,
+            size: 30,
+          ),
+        );
+      },
+    );
+  }
+
+  int _getImageCacheSize(BuildContext context, double widgetSize) {
+    final devicePixelRatio = MediaQuery.of(context).devicePixelRatio;
+    return (devicePixelRatio * widgetSize).round();
   }
 }

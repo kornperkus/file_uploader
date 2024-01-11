@@ -94,9 +94,9 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin {
                           final files = await _getMockFiles();
 
                           if (!mounted) return;
-                          shipmentImageUploadController.upload(
+                          shipmentImageUploadController.uploadImages(
                             context: context,
-                            files: files,
+                            imageFiles: files,
                             imageGroup: ImageGroup.product,
                           );
                         },
@@ -121,9 +121,9 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin {
                     child: UploadImagePreview(
                       fileUploadInfo: item,
                       onRetryUploadPressed: () => shipmentImageUploadController
-                          .retryUpload(context: context, files: [item]),
+                          .retryUploadImages(context: context, images: [item]),
                       onDeletedPressed: () =>
-                          shipmentImageUploadController.delete(item),
+                          shipmentImageUploadController.deleteImage(item),
                     ),
                   );
                 },
@@ -140,9 +140,9 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin {
                           final files = await _getMockFiles();
 
                           if (!mounted) return;
-                          shipmentImageUploadController.upload(
+                          shipmentImageUploadController.uploadImages(
                             context: context,
-                            files: files,
+                            imageFiles: files,
                             imageGroup: ImageGroup.document,
                           );
                         },
@@ -167,9 +167,9 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin {
                     child: UploadImagePreview(
                       fileUploadInfo: item,
                       onRetryUploadPressed: () => shipmentImageUploadController
-                          .retryUpload(context: context, files: [item]),
+                          .retryUploadImages(context: context, images: [item]),
                       onDeletedPressed: () =>
-                          shipmentImageUploadController.delete(item),
+                          shipmentImageUploadController.deleteImage(item),
                     ),
                   );
                 },
@@ -186,10 +186,10 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin {
                           final files = await _getMockFiles();
 
                           if (!mounted) return;
-                          shipmentImageUploadController.upload(
+                          shipmentImageUploadController.uploadImages(
                             context: context,
-                            files: files,
-                            imageGroup: ImageGroup.truckCover,
+                            imageFiles: files,
+                            imageGroup: ImageGroup.cover,
                           );
                         },
                         icon: const Icon(Icons.add),
@@ -213,9 +213,9 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin {
                     child: UploadImagePreview(
                       fileUploadInfo: item,
                       onRetryUploadPressed: () => shipmentImageUploadController
-                          .retryUpload(context: context, files: [item]),
+                          .retryUploadImages(context: context, images: [item]),
                       onDeletedPressed: () =>
-                          shipmentImageUploadController.delete(item),
+                          shipmentImageUploadController.deleteImage(item),
                     ),
                   );
                 },
@@ -228,8 +228,8 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin {
   }
 
   void _addUploadedFiles(ImageGroup imageGroup) async {
-    shipmentImageUploadController.addUploadedFiles(
-      files: [
+    shipmentImageUploadController.addUploadedImages(
+      imageDataList: [
         {
           'id': _uuid.v4(),
           'url':
