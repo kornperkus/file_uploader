@@ -152,8 +152,8 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin {
                       child: UploadImagePreview(
                         fileUploadInfo: item,
                         onRetryUploadPressed: () =>
-                            _shipmentImageUploadController.retryUploadImages(
-                                context: context, images: [item]),
+                            _shipmentImageUploadController
+                                .retryUploadImages(images: [item]),
                         onDeletedPressed: () =>
                             _shipmentImageUploadController.deleteImage(item),
                       ),
@@ -198,8 +198,8 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin {
                       child: UploadImagePreview(
                         fileUploadInfo: item,
                         onRetryUploadPressed: () =>
-                            _shipmentImageUploadController.retryUploadImages(
-                                context: context, images: [item]),
+                            _shipmentImageUploadController
+                                .retryUploadImages(images: [item]),
                         onDeletedPressed: () =>
                             _shipmentImageUploadController.deleteImage(item),
                       ),
@@ -244,8 +244,8 @@ class _MyHomePageState extends State<MyHomePage> with AfterLayoutMixin {
                       child: UploadImagePreview(
                         fileUploadInfo: item,
                         onRetryUploadPressed: () =>
-                            _shipmentImageUploadController.retryUploadImages(
-                                context: context, images: [item]),
+                            _shipmentImageUploadController
+                                .retryUploadImages(images: [item]),
                         onDeletedPressed: () =>
                             _shipmentImageUploadController.deleteImage(item),
                       ),

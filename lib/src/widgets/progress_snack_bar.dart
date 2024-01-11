@@ -109,7 +109,6 @@ class _SnackBarContentState extends State<SnackBarContent> {
                       const SizedBox(width: 8),
                       GestureDetector(
                         onTap: () => widget.controller.retryUploadImages(
-                          context: context,
                           images: state.errorImages,
                         ),
                         child: Text(

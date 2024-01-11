@@ -70,7 +70,6 @@ class ShipmentImageUploadController
   }
 
   void retryUploadImages({
-    required BuildContext context,
     required List<FileUploadInfo> images,
   }) {
     if (state.isUploadInProgress) {

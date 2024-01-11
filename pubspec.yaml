@@ -13,10 +13,10 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  flutter_state_notifier: ^1.0.0
+  flutter_state_notifier: ^0.7.3
   intl: ^0.17.0
   path: ^1.8.0
-  state_notifier: ^1.0.0
+  state_notifier: ^0.7.2+1
   uuid: ^3.0.7
 
 dev_dependencies:
